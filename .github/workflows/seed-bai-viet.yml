@@ -2,6 +2,7 @@ name: seed-bai-viet
 
 on:
   # Trigger qua HTTP: POST .../dispatches  với event_type = "seed-bai-viet"
+  # Truyền biến qua body client_payload (không cần cấu hình Variables trên GitHub).
   repository_dispatch:
     types: [seed-bai-viet]
   # Cho phép bấm chạy tay trên GitHub UI
@@ -10,6 +11,9 @@ on:
       category:
         description: "slug category WordPress"
         required: true
+      wp_url:
+        description: "URL website (vd https://hoangminhhoa.com)"
+        required: false
 
 jobs:
   seed:
@@ -22,11 +26,17 @@ jobs:
       - run: pip install requests
       - name: Cào category WordPress -> bảng BÀI VIẾT (Lark)
         env:
+          # Bí mật: giữ trong GitHub Secrets, KHÔNG truyền qua request.
           LARK_APP_ID: ${{ secrets.LARK_APP_ID }}
           LARK_APP_SECRET: ${{ secrets.LARK_APP_SECRET }}
+          # Biến lấy từ body request (client_payload); nếu thiếu thì fallback sang Variables.
+          WP_URL: ${{ github.event.client_payload.wp_url || github.event.inputs.wp_url || vars.WP_URL }}
+          CATEGORY: ${{ github.event.client_payload.category || github.event.inputs.category }}
+          APP_TOKEN: ${{ github.event.client_payload.app_token || vars.LARK_APP_TOKEN }}
+          TABLE_ID: ${{ github.event.client_payload.table_id || vars.LARK_TABLE_ID }}
         run: |
           python .claude/skills/seed-bai-viet/scripts/seed_category.py \
-            --wp-url "${{ vars.WP_URL }}" \
-            --category "${{ github.event.client_payload.category || github.event.inputs.category }}" \
-            --app-token "${{ vars.LARK_APP_TOKEN }}" \
-            --table-id "${{ vars.LARK_TABLE_ID }}"
+            --wp-url "$WP_URL" \
+            --category "$CATEGORY" \
+            --app-token "$APP_TOKEN" \
+            --table-id "$TABLE_ID"
