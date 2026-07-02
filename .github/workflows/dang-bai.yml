@@ -1,0 +1,29 @@
+name: dang-bai
+
+on:
+  # Trigger qua HTTP: POST .../dispatches  với event_type = "dang-bai"
+  repository_dispatch:
+    types: [dang-bai]
+  # Cho phép bấm chạy tay trên GitHub UI
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Đăng bài tự động (Lark Base 14.3 -> Facebook feed)
+        env:
+          # Bí mật -> GitHub Secrets (dùng chung app với dang-reel)
+          LARK_APP_ID: ${{ secrets.LARK_APP_ID }}
+          LARK_APP_SECRET: ${{ secrets.LARK_APP_SECRET }}
+          # Token FB KHÔNG cần ở đây: engine tự lấy token từng Page trong bảng 14.1.
+          # Tùy chọn ghi đè qua body request (trống -> dùng default trong script)
+          LARK_APP_TOKEN: ${{ github.event.client_payload.app_token }}
+          LARK_TABLE_ID: ${{ github.event.client_payload.table_id }}
+          PAGES_TABLE_ID: ${{ github.event.client_payload.pages_table_id }}
+          RESPECT_SCHEDULE: ${{ github.event.client_payload.respect_schedule }}
+        run: node .claude/skills/dang-reel-facebook/scripts/post-feed-api.js
