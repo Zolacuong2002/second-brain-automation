@@ -37,6 +37,14 @@ const log = (...a) => console.log(now(), ...a);
 const plain = v => v==null?'':typeof v==='string'?v:Array.isArray(v)?v.map(x=>x.text||x.name||'').join(''):(v.text||v.name||v.link||String(v));
 const isVid = a => /\.(mp4|mov|m4v|webm|avi|mkv)$/i.test(a.name||'') || /^video/i.test(a.type||'');
 const isImg = a => /\.(jpe?g|png|gif|webp|bmp)$/i.test(a.name||'') || /^image/i.test(a.type||'');
+// Lấy record_ids từ cell link — API list trả MẢNG [{record_ids:[...]}], API 1-record trả OBJECT {record_ids:[...]}.
+const linkRecIds = cell => { if(!cell) return [];
+  const arr = Array.isArray(cell) ? cell : [cell]; let ids=[];
+  for(const el of arr){ if(!el) continue;
+    if(Array.isArray(el.record_ids)) ids=ids.concat(el.record_ids);
+    else if(el.record_id) ids.push(el.record_id);
+    else if(typeof el==='string') ids.push(el); }
+  return ids.filter(Boolean); };
 
 async function larkToken() {
   const r = await fetch(CFG.LARK_DOMAIN+'/open-apis/auth/v3/tenant_access_token/internal',
@@ -49,6 +57,11 @@ async function listAll(tk, tableId) {
     const j=await r.json(); if(j.code!==0)throw new Error('list '+tableId+': '+JSON.stringify(j));
     items=items.concat(j.data.items||[]); pt=j.data.has_more?j.data.page_token:''; } while(pt);
   return items;
+}
+async function listFields(tk, tableId) {
+  const r=await fetch(`${CFG.LARK_DOMAIN}/open-apis/bitable/v1/apps/${CFG.APP_TOKEN}/tables/${tableId}/fields?page_size=200`,{headers:{Authorization:'Bearer '+tk}});
+  const j=await r.json(); if(j.code!==0)throw new Error('fields: '+JSON.stringify(j));
+  return (j.data.items||[]).map(f=>({name:f.field_name,type:f.type}));
 }
 async function updateRow(tk, recId, fields) {
   const r=await fetch(`${CFG.LARK_DOMAIN}/open-apis/bitable/v1/apps/${CFG.APP_TOKEN}/tables/${CFG.TABLE_ID}/records/${recId}`,
@@ -100,6 +113,13 @@ function scheduleMs(cell){ if(cell==null)return null; if(typeof cell==='number')
 
 (async()=>{
   const tk=await larkToken();
+  // Tự dò cột link tới bảng Pages (type 18 single-link / 21 duplex-link) — không phụ thuộc tên cột.
+  try {
+    const flds=await listFields(tk, CFG.TABLE_ID);
+    const lf=flds.find(f=>f.type===18||f.type===21) || flds.find(f=>/page/i.test(f.name));
+    if(lf) F.link=lf.name;
+    log(`Cột link Page = "${F.link}".`);
+  } catch(e){ log('! không đọc được fields, dùng mặc định "'+F.link+'": '+String(e.message||e)); }
   // map record_id (bảng Pages) -> {fbId, token, name}
   const pageRecs=await listAll(tk, CFG.PAGES_TABLE);
   const pageMap=new Map();
@@ -111,7 +131,7 @@ function scheduleMs(cell){ if(cell==null)return null; if(typeof cell==='number')
   for(const row of rows){
     const recId=row.record_id;
     if(plain(row.fields[F.status])===DONE) { skip++; continue; }              // đã đăng
-    const linkCell=row.fields[F.link]; const pageRecId=linkCell&&linkCell.record_ids&&linkCell.record_ids[0];
+    const pageRecId=linkRecIds(row.fields[F.link])[0];
     const atts=Array.isArray(row.fields[F.media])?row.fields[F.media]:[];
     if(!pageRecId || atts.length===0) { skip++; continue; }                   // dòng chưa sẵn sàng → bỏ qua im lặng
     const pg=pageMap.get(pageRecId);
