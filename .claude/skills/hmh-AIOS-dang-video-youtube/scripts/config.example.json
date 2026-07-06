@@ -1,0 +1,14 @@
+{
+  "larkAppId": "cli_xxx (Lark custom app App ID)",
+  "larkAppSecret": "xxx (App Secret)",
+  "larkDomain": "https://open.larksuite.com",
+  "appToken": "base_id / app_token của Lark Base",
+  "tablePost": "tblXXXX (bảng đăng video — chạy setup-table.mjs để tạo & lấy id)",
+
+  "oauthClientId": "xxxxx.apps.googleusercontent.com (OAuth Desktop app)",
+  "oauthClientSecret": "GOCSPX-xxxx",
+  "oauthRefreshToken": "(để trống — get-oauth-token.mjs sẽ tự điền)",
+
+  "defaultCategoryId": "22 (People & Blogs; 27=Education, 24=Entertainment...)",
+  "defaultPrivacy": "private (private | unlisted | public)"
+}
