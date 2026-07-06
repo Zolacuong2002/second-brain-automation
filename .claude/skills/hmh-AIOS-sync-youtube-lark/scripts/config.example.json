@@ -1,0 +1,10 @@
+{
+  "youtubeApiKey": "AIzaSy... (YouTube Data API v3 key)",
+  "larkAppId": "cli_xxx (Lark custom app App ID)",
+  "larkAppSecret": "xxx (App Secret)",
+  "larkDomain": "https://open.larksuite.com  (Lark quốc tế) hoặc https://open.feishu.cn (TQ)",
+  "appToken": "base_id / app_token của Lark Base",
+  "tableChannel": "tblXXXX (bảng nhận dữ liệu KÊNH)",
+  "tableVideo": "tblYYYY (bảng nhận dữ liệu VIDEO)",
+  "channel": "@handle hoặc UCxxxxxxxx (kênh YouTube nguồn)"
+}
