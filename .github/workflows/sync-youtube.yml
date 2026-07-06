@@ -1,0 +1,29 @@
+# Lấy dữ liệu kênh + video YouTube -> Lark Base. Đặt vào .github/workflows/ của repo.
+# Gọi qua HTTP: POST /repos/<user>/<repo>/dispatches  body {"event_type":"sync-youtube","client_payload":{"channel":"@handle"}}
+name: sync-youtube
+
+on:
+  repository_dispatch:
+    types: [sync-youtube]
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Sync YouTube -> Lark
+        env:
+          # ---- Bí mật -> GitHub Secrets ----
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          LARK_APP_SECRET: ${{ secrets.LARK_APP_SECRET }}
+          # ---- Không bí mật -> GitHub Variables (client_payload ghi đè nếu có) ----
+          LARK_APP_ID: ${{ vars.LARK_APP_ID }}
+          LARK_BASE_ID: ${{ vars.LARK_BASE_ID }}
+          TABLE_CHANNEL: ${{ vars.TABLE_CHANNEL }}
+          TABLE_VIDEO: ${{ vars.TABLE_VIDEO }}
+          YT_CHANNEL: ${{ github.event.client_payload.channel || vars.YT_CHANNEL }}
+        run: node ".claude/skills/hmh-AIOS-sync-youtube-lark/scripts/sync-youtube-lark.mjs"
