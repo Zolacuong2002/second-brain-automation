@@ -1,0 +1,33 @@
+# Đăng video Lark Base -> YouTube. Đặt file này vào .github/workflows/ của repo.
+# Gọi qua HTTP: POST /repos/<user>/<repo>/dispatches  body {"event_type":"dang-video-youtube","client_payload":{"record_id":"rec..."}}
+name: dang-video-youtube
+
+on:
+  repository_dispatch:
+    types: [dang-video-youtube]
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Đăng video lên YouTube
+        env:
+          # ---- Bí mật -> GitHub Secrets ----
+          LARK_APP_SECRET: ${{ secrets.LARK_APP_SECRET }}
+          YT_OAUTH_CLIENT_SECRET: ${{ secrets.YT_OAUTH_CLIENT_SECRET }}
+          YT_OAUTH_REFRESH_TOKEN: ${{ secrets.YT_OAUTH_REFRESH_TOKEN }}
+          # ---- Không bí mật -> GitHub Variables ----
+          LARK_APP_ID: ${{ vars.LARK_APP_ID }}
+          LARK_BASE_ID: ${{ vars.LARK_BASE_ID }}
+          TABLE_POST: ${{ vars.TABLE_POST }}
+          YT_OAUTH_CLIENT_ID: ${{ vars.YT_OAUTH_CLIENT_ID }}
+          YT_CATEGORY_ID: ${{ vars.YT_CATEGORY_ID }}
+          YT_PRIVACY: ${{ vars.YT_PRIVACY }}
+          # ---- Nút bấm Lark gửi kèm record_id ----
+          RECORD_ID: ${{ github.event.client_payload.record_id }}
+        run: node ".claude/skills/hmh-AIOS-dang-video-youtube/scripts/post-video-youtube.mjs"
